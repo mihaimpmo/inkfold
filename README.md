@@ -6,25 +6,36 @@
 
 ## Features
 
-**Editor**
-- Multi-page designs with page thumbnails, reorder, duplicate, delete
-- 15 size presets (Instagram, Story, YouTube, A4, presentation, business card…) + custom sizes
-- 8 starter templates, text, 12 shapes, 25 icons, QR codes, free drawing (pen / marker / spray)
-- Image upload by button, drag & drop or paste; free photo search via [Openverse](https://openverse.org)
-- 24 Google Fonts, font pairings, bold/italic/underline/strike, alignment, letter spacing, line height, case
-- Text effects: shadow, lift, outline, hollow, neon, echo, glitch
-- Solid and gradient fills (linear / radial), borders, dashed borders, shadows, opacity, rotation, corner radius
-- Image filters (Vivid, Mono, Vintage, Cool, Warm, Drama, Fade) and manual brightness, contrast, saturation, hue, blur
-- Layers panel with show/hide, lock, reorder; group/ungroup; align and distribute; smart snapping guides
+**Create**
+- Multi-page designs with thumbnails, reorder, duplicate and delete
+- 15 size presets (Instagram, Story, YouTube, A4, presentation, business card…) plus custom sizes
+- 9 starter templates, including a website hero with links and animations
+- Text, 12 shapes, 25 icons, 48 emoji, QR codes, free drawing (pen, marker, spray)
+- **Charts** (bar, line, pie, donut) and **tables** you can edit again later, coloured from your brand kit
+- Image upload (button, drag and drop, paste) and free photo search via [Openverse](https://openverse.org)
+
+**Edit**
+- 24 Google Fonts, font pairings, bold/italic/underline/strike, alignment, spacing, line height, case
+- Text effects: shadow, lift, outline, hollow, neon, echo, glitch, highlight
+- Solid and gradient fills, gradient page backgrounds, borders, shadows, opacity, rotation, corner radius
+- Colour picker from anywhere on screen (eyedropper, in Chromium browsers)
+- Photos: filters, manual adjustments, **crop**, **frame shapes** (circle, rounded, arch, star, heart, hexagon, blob), colour palette pulled from the photo, background remover (the AI runs in your browser)
+- **Copy style / paste style** between elements
+- Exact size and position (X, Y, W, H)
+- Layers panel with show, hide, lock and reorder; group and ungroup; align and distribute; snapping guides
 - Unlimited undo/redo, keyboard shortcuts, zoom
 
-**"Pro" features — all free here**
-- ✨ **Background remover** — AI model runs locally in your browser ([@imgly/background-removal](https://github.com/imgly/background-removal-js))
-- ✨ **Magic Resize** — rescale a whole design to a new format, in place or as a copy
-- **Brand kit** — brand colours, heading/body fonts, logos
-- **Transparent PNG**, high-res export up to 4×, multi-page **PDF**, **SVG**
-- **Version history** — automatic snapshots + manual saves, one-click restore
-- Unlimited designs, auto-saved in the browser (IndexedDB)
+**Share**
+- **HTML website export**: one self-contained `.html` file with real, selectable text, Google Fonts, every page as a section, clickable links and animations that play on scroll
+- **HTML slideshow export**: arrow keys, click or swipe, full screen, slide transitions
+- **Present** mode right inside the editor
+- Element **links** that work in HTML and PDF
+- Element **animations**: fade, rise, pop, slide, blur, drop, spin
+- PNG (optionally transparent), JPG, multi-page PDF, SVG, and Inkfold project files (.json)
+- Magic Resize to any format, in place or as a copy
+- Brand kit (colours, heading and body fonts, logos)
+- Version history with automatic and manual snapshots
+- Unlimited designs, saved automatically in your browser
 
 ## Hosting
 

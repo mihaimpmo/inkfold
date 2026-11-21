@@ -23,7 +23,8 @@
   <span id="saveState" class="save-state">Saved</span>
   <div class="spacer"></div>
   <button class="tbtn" id="btnHistory" title="Version history">History</button>
-  <button class="tbtn pro" id="btnResize" title="Magic Resize">Resize</button>
+  <button class="tbtn" id="btnPresent" title="Present full screen">▶ Present</button>
+  <button class="tbtn" id="btnResize" title="Magic Resize">Resize</button>
   <button class="tbtn primary" id="btnExport">Download</button>
 </header>
 
@@ -50,6 +51,16 @@
       <div class="grid4" id="shapeGrid"></div>
       <h3>Icons</h3>
       <div class="grid4" id="iconGrid"></div>
+      <h3>Charts &amp; tables</h3>
+      <div class="grid4" id="dataGrid">
+        <button class="tile" data-chart="bar" title="Bar chart"><svg viewBox="0 0 24 24" fill="#5b3df5"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="15" rx="1"/><rect x="17" y="9" width="4" height="12" rx="1"/></svg></button>
+        <button class="tile" data-chart="line" title="Line chart"><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M3 18 9 11l4 4 8-10"/></svg></button>
+        <button class="tile" data-chart="pie" title="Pie chart"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#00c4cc"/><path d="M12 12V3a9 9 0 0 1 8.5 12z" fill="#5b3df5"/></svg></button>
+        <button class="tile" data-chart="donut" title="Donut chart"><svg viewBox="0 0 24 24" fill="none" stroke-width="5"><circle cx="12" cy="12" r="7.5" stroke="#00c4cc"/><path d="M12 4.5a7.5 7.5 0 0 1 7.3 9.2" stroke="#5b3df5"/></svg></button>
+        <button class="tile" data-table="1" title="Table"><svg viewBox="0 0 24 24" fill="none" stroke="#18191b" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 4v16M15 4v16"/><rect x="3" y="4" width="18" height="5" fill="#5b3df5" stroke="none" rx="2"/></svg></button>
+      </div>
+      <h3>Emoji</h3>
+      <div class="grid4" id="emojiGrid"></div>
       <h3>QR code</h3>
       <div class="row"><input id="qrText" placeholder="https://..." class="inp"><button class="btn" id="qrAdd">Add</button></div>
     </section>
@@ -92,7 +103,7 @@
     </section>
 
     <section data-pane="brand">
-      <h3>Brand kit <span class="badge">PRO</span></h3>
+      <h3>Brand kit</h3>
       <label class="lbl">Brand colours</label>
       <div class="swatches" id="brandColors"></div>
       <div class="row"><input type="color" id="brandColorIn" value="#5b3df5"><button class="btn" id="brandColorAdd">Add colour</button></div>
@@ -143,5 +154,6 @@
 <script src="js/data.js"></script>
 <script src="js/store.js"></script>
 <script src="js/app.js"></script>
+<script src="js/features.js"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isMobile = () => matchMedia('(max-width:700px)').matches;
 
-const PROPS = ['name','locked','fx','selectable','evented','hasControls','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','editable'];
+const PROPS = ['name','locked','fx','link','anim','mask','crop','chart','table','selectable','evented','hasControls','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','editable'];
 fabric.textureSize = 4096;
 Object.assign(fabric.Object.prototype, {
   transparentCorners:false, cornerColor:'#ffffff', cornerStrokeColor:'#5b3df5', borderColor:'#5b3df5',
@@ -403,7 +403,7 @@ const FX_PRESETS = {
 function textEffect(o, kind){
   const fs = o.fontSize, col = typeof o.fill === 'string' ? o.fill : '#18191b';
   if (o.fill === 'rgba(0,0,0,0)' && o.stroke) o.set('fill', o.stroke);
-  o.set({shadow:null, stroke:null, strokeWidth:0, paintFirst:'fill'});
+  o.set({shadow:null, stroke:null, strokeWidth:0, paintFirst:'fill', textBackgroundColor:''});
   const c = typeof o.fill === 'string' ? o.fill : col;
   if (kind === 'shadow') o.set('shadow', new fabric.Shadow({color:'rgba(0,0,0,.45)', blur:fs * .12, offsetX:fs * .06, offsetY:fs * .06}));
   if (kind === 'lift') o.set('shadow', new fabric.Shadow({color:'rgba(0,0,0,.35)', blur:fs * .45, offsetX:0, offsetY:fs * .1}));
@@ -411,6 +411,7 @@ function textEffect(o, kind){
   if (kind === 'hollow') o.set({stroke:c, strokeWidth:Math.max(1, fs / 30), fill:'rgba(0,0,0,0)'});
   if (kind === 'neon') o.set('shadow', new fabric.Shadow({color:c, blur:fs * .6, offsetX:0, offsetY:0}));
   if (kind === 'echo') o.set('shadow', new fabric.Shadow({color:new fabric.Color(c).setAlpha(.45).toRgba(), blur:0, offsetX:fs * .08, offsetY:fs * .08}));
+  if (kind === 'highlight') o.set('textBackgroundColor', brand.colors.find(x => !/^#(fff|ffffff|000|000000|18191b)$/i.test(x)) || '#ffde59');
   if (kind === 'glitch') o.set('shadow', new fabric.Shadow({color:'#00e5ff', blur:0, offsetX:-fs * .05, offsetY:0}));
 }
 function setAsBackground(img){
@@ -492,7 +493,10 @@ async function doExport(o){
   const idx = o.pages === 'all' ? D.pages.map((_, i) => i) : [D.cur], name = safeName();
   toast('<span class="spin"></span> Preparing download…', 0);
   try {
-    if (o.fmt === 'json') {
+    if (o.fmt === 'html' || o.fmt === 'slides') {
+      const html = await PZ.ext.buildHTML(o.fmt === 'slides' ? 'slides' : 'site', idx);
+      download(URL.createObjectURL(new Blob([html], {type:'text/html'})), name + (o.fmt === 'slides' ? '-slides' : '') + '.html');
+    } else if (o.fmt === 'json') {
       const blob = new Blob([JSON.stringify({app:'inkfold', v:1, title:D.title, w:D.w, h:D.h, pages:D.pages.map(p => p.json)})], {type:'application/json'});
       download(URL.createObjectURL(blob), name + '.inkfold.json');
     } else if (o.fmt === 'pdf') {
@@ -502,6 +506,7 @@ async function doExport(o){
         const url = await renderPageURL(D.pages[idx[n]].json, o.scale, o.quality === 'print' ? 'png' : 'jpeg', false);
         if (n) pdf.addPage([D.w, D.h], orient);
         pdf.addImage(url, o.quality === 'print' ? 'PNG' : 'JPEG', 0, 0, D.w, D.h, undefined, 'FAST');
+        if (PZ.ext) await PZ.ext.pdfLinks(pdf, D.pages[idx[n]].json);
       }
       pdf.save(name + '.pdf');
     } else if (o.fmt === 'svg') {
@@ -567,9 +572,10 @@ function renderCtx(){
   const multi = a.type === 'activeSelection', img = a.type === 'image', txt = a.type === 'textbox';
   el.innerHTML = [
     txt ? `<button class="btn" data-a="edit">Edit text</button>` : '',
-    img ? `<button class="btn" data-a="rmbg">✨ Remove background <span class="badge">PRO</span></button><button class="btn" data-a="asbg">Set as background</button>` : '',
+    img ? `<button class="btn" data-a="rmbg">✨ Remove background</button><button class="btn" data-a="asbg">Set as background</button>` : '',
     multi ? `<button class="btn" data-a="group">Group</button>` : '',
     a.type === 'group' ? `<button class="btn" data-a="ungroup">Ungroup</button>` : '',
+    PZ.ext ? PZ.ext.ctx(a) : '',
     `<button class="btn" data-a="dup">Duplicate</button>`,
     `<button class="btn" data-a="lock">${a.locked ? 'Unlock' : 'Lock'}</button>`,
     `<button class="btn" data-a="fx">Flip ↔</button><button class="btn" data-a="fy">Flip ↕</button>`,
@@ -580,6 +586,7 @@ function renderCtx(){
 $('#ctx').addEventListener('click', e => {
   const b = e.target.closest('[data-a]'); if (!b) return;
   const a = active();
+  if (PZ.ext && PZ.ext.action(b.dataset.a, a)) return;
   ({
     pgdup:dupPage, pgdel:delPage, pgl:() => movePage(-1), pgr:() => movePage(1),
     selall:() => { const objs = canvas.getObjects().filter(o => !o.locked); if (!objs.length) return; canvas.setActiveObject(new fabric.ActiveSelection(objs, {canvas})); canvas.requestRenderAll(); },
@@ -605,6 +612,7 @@ function renderProps(){
     el.innerHTML = `<h4>Page background</h4>
       <div class="row"><input type="color" data-p="bg" value="${hex(typeof bg === 'string' && bg ? bg : '#ffffff')}"><button class="btn" data-x="bgnone">Transparent</button></div>
       ${swatchRow('bg')}
+      ${PZ.ext ? PZ.ext.pageProps() : ''}
       <h4>Size</h4><p class="hint">${D.w} × ${D.h} px</p><button class="btn wide" data-x="resize">✨ Magic Resize</button>
       <h4>Tips</h4><p class="hint">Double-click text to edit · Ctrl+D duplicate · Ctrl+G group · Arrows nudge (Shift = 10px) · Ctrl+scroll zoom · Paste images straight in.</p>`;
     return;
@@ -628,14 +636,14 @@ function renderProps(){
       ${slider('Spacing', 'charSpacing', one.charSpacing || 0, -200, 1000, 10)}
       ${slider('Line height', 'lineHeight', one.lineHeight, .6, 3, .05)}
       <div class="row"><button class="btn" data-case="up">AA</button><button class="btn" data-case="low">aa</button><button class="btn" data-case="title">Aa</button></div>
-      <h4>Effects</h4><div class="grid3">${['none', 'shadow', 'lift', 'outline', 'hollow', 'neon', 'echo', 'glitch'].map(k => `<button class="btn" data-fxt="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>`;
+      <h4>Effects</h4><div class="grid3">${['none', 'shadow', 'lift', 'outline', 'hollow', 'neon', 'echo', 'glitch', 'highlight'].map(k => `<button class="btn" data-fxt="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>`;
   }
   if (canFill) {
     h += `<h4>Colour</h4>
       <div class="seg" style="margin-bottom:6px"><button data-ft="solid" class="${gi ? '' : 'on'}">Solid</button><button data-ft="grad" class="${gi ? 'on' : ''}">Gradient</button></div>`;
     if (gi) h += `<div class="row"><input type="color" data-p="g1" value="${gi.a}"><input type="color" data-p="g2" value="${gi.b}">
       <select class="inp" data-p="gdir"><option value="h" ${gi.dir === 'h' ? 'selected' : ''}>→ Horizontal</option><option value="v" ${gi.dir === 'v' ? 'selected' : ''}>↓ Vertical</option><option value="d" ${gi.dir === 'd' ? 'selected' : ''}>↘ Diagonal</option><option value="r" ${gi.dir === 'r' ? 'selected' : ''}>◎ Radial</option></select></div>`;
-    else h += `<div class="row"><input type="color" data-p="fill" value="${hex(f)}"></div>${swatchRow('fill')}`;
+    else h += `<div class="row"><input type="color" data-p="fill" value="${hex(f)}">${window.EyeDropper ? '<button class="btn" data-x="eye">Pick colour</button>' : ''}</div>${swatchRow('fill')}`;
   }
   if (one && one.type === 'image') {
     const fx = one.fx || {};
@@ -653,6 +661,7 @@ function renderProps(){
   if (one) h += `<h4>Border</h4><div class="row"><input type="color" data-p="stroke" value="${hex(one.stroke || '#000000')}"><input class="num" type="number" data-p="strokeWidth" value="${one.strokeWidth || 0}" min="0" max="200"><select class="inp" data-p="dash" style="flex:1"><option value="">Solid</option><option value="d" ${one.strokeDashArray ? 'selected' : ''}>Dashed</option></select></div>
     <h4>Shadow</h4><div class="row"><button class="chip ${sh ? 'on' : ''}" data-x="shadow">${sh ? 'On' : 'Off'}</button>${sh ? `<input type="color" data-p="shc" value="${hex(sh.color)}">` : ''}</div>
     ${sh ? slider('Blur', 'shb', sh.blur, 0, 200, 1) + slider('Offset', 'sho', sh.offsetY, -100, 100, 1) : ''}`;
+  if (PZ.ext) h += PZ.ext.props(one, a);
   h += `<h4>Transparency</h4>${slider('Opacity', 'opacity', one ? one.opacity : 1, 0, 1, .01)}`;
   if (one) h += slider('Rotate', 'angle', Math.round(one.angle || 0), 0, 360, 1);
   h += `<h4>Position on page</h4><div class="grid3">
@@ -667,6 +676,7 @@ $('#props').addEventListener('input', e => {
   const v = t.type === 'range' || t.type === 'number' ? +t.value : t.value;
   if (t.nextElementSibling && t.nextElementSibling.tagName === 'OUTPUT') t.nextElementSibling.textContent = (+v).toFixed(+t.step < 1 ? 2 : 0);
   const a = active();
+  if (PZ.ext && PZ.ext.input(t, p, v)) return;
   if (p === 'bg') { canvas.backgroundColor = v; canvas.requestRenderAll(); return record(); }
   if (!a) return;
   if (p === 'font') return targets().forEach(o => o.type === 'textbox' && useFont(o, v).then(record));
@@ -694,7 +704,9 @@ $('#props').addEventListener('click', e => {
   }
   if (d.x === 'bgnone') { canvas.backgroundColor = ''; canvas.requestRenderAll(); return record(); }
   if (d.x === 'resize') return openResize();
+  if (PZ.ext && PZ.ext.click(b, d)) return;
   if (!a) return;
+  if (d.x === 'eye') { new EyeDropper().open().then(r => { apply(o => setFill(o, r.sRGBHex)); renderProps(); }).catch(() => {}); return; }
   if (d.al) return alignSel(d.al);
   if (d.x === 'disth') return distribute('h');
   if (d.x === 'distv') return distribute('v');
@@ -931,7 +943,7 @@ $('#btnResize').onclick = openResize;
 $('#btnExport').onclick = () => {
   const body = openModal(`<h2>Download</h2>
     <label class="lbl">File type</label>
-    <select class="inp" id="exF"><option value="png">PNG — best for graphics</option><option value="jpeg">JPG — small photos</option><option value="pdf">PDF — print & documents</option><option value="svg">SVG — vector</option><option value="json">Inkfold project (.json)</option></select>
+    <select class="inp" id="exF"><option value="png">PNG — best for graphics</option><option value="jpeg">JPG — small photos</option><option value="pdf">PDF — print & documents</option><option value="svg">SVG — vector</option><option value="html">HTML website — scrolling page</option><option value="slides">HTML slideshow — presentation</option><option value="json">Inkfold project (.json)</option></select>
     <div id="exOpts"></div>
     <label class="lbl">Pages</label><select class="inp" id="exP"><option value="all">All pages (${D.pages.length})</option><option value="cur">Current page</option></select>
     <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="exGo">Download</button></div>`);
@@ -939,8 +951,10 @@ $('#btnExport').onclick = () => {
     const f = body.querySelector('#exF').value;
     body.querySelector('#exOpts').innerHTML = (f === 'png' || f === 'jpeg' || f === 'pdf') ? `
       <label class="lbl">Size × <output id="exSv">2</output> (${D.w * 2} × ${D.h * 2} px)</label><input type="range" id="exS" min="0.25" max="4" step="0.25" value="2" style="width:100%">
-      ${f === 'png' ? '<label class="row"><input type="checkbox" id="exT"> Transparent background <span class="badge">PRO</span></label>' : ''}
+      ${f === 'png' ? '<label class="row"><input type="checkbox" id="exT"> Transparent background</label>' : ''}
       ${f === 'pdf' ? '<label class="lbl">Quality</label><select class="inp" id="exQ"><option value="std">Standard (smaller file)</option><option value="print">Print (lossless)</option></select>' : ''}` :
+      f === 'html' ? '<p class="hint">One self-contained .html file: real, selectable text with Google Fonts, every page as a section, element links clickable and element animations playing as you scroll. Upload it anywhere — even a GitHub Pages repo.</p>' :
+      f === 'slides' ? '<p class="hint">One .html file that plays your pages as slides: arrow keys, click or swipe to move, F for full screen, animations on every slide.</p>' :
       f === 'svg' ? '<p class="hint">SVG keeps shapes and text as vectors. Fonts are referenced by name, so the viewer needs them installed or online.</p>' : '<p class="hint">Re-open this file later from Designs → Open file.</p>';
     const s = body.querySelector('#exS');
     if (s) s.oninput = () => { body.querySelector('#exSv').textContent = s.value; s.previousElementSibling.lastChild.textContent = ` (${Math.round(D.w * s.value)} × ${Math.round(D.h * s.value)} px)`; };
@@ -987,7 +1001,7 @@ $('#btnDesigns').onclick = async () => {
 $('#btnHistory').onclick = async () => {
   await save();
   const list = (await PZ.store.get('versions:' + D.id)) || [];
-  const body = openModal(`<h2>Version history <span class="badge">PRO</span></h2>
+  const body = openModal(`<h2>Version history</h2>
     <div class="row"><button class="btn" id="vsSave">Save a version now</button></div>
     <ul class="vlist">${list.map((v, i) => `<li><img src="${v.thumb || ''}" alt=""><span>${new Date(v.t).toLocaleString()}${v.manual ? ' · saved' : ' · auto'}<br><small class="hint">${v.w}×${v.h} · ${v.pages.length} page(s)</small></span><button class="btn" data-v="${i}">Restore</button></li>`).join('') || '<p class="hint">Versions are saved automatically every few minutes while you work.</p>'}</ul>`);
   body.querySelector('#vsSave').onclick = async () => { await snapshot(true); closeModal(); toast('Version saved'); };
@@ -1024,6 +1038,13 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', () => { commitPage(); });
 
+/* ---------------- public API (used by features.js) ---------------- */
+PZ.app = {canvas, get D(){ return D; }, get brand(){ return brand; }, get zoom(){ return zoom; }, PROPS,
+  addText, addShape, addIcon, addQR, addImageURL, doExport, magicResize, save, stepHistory, place, apply, targets, active, record,
+  refreshAll, renderProps, renderCtx, loadFonts, fontsIn, normalize, toast, openModal, closeModal, download, base, safeName,
+  commitPage, lockObj, gradient, gradInfo, hex, applyFx, setFill, renderPageURL, isMobile,
+  addBrandColor(c){ if (!brand.colors.includes(c)) { brand.colors.push(c); saveBrand(); } }};
+
 /* ---------------- boot ---------------- */
 (async function boot(){
   const [b, up, last] = await Promise.all([PZ.store.get('brand'), PZ.store.get('uploads'), PZ.store.get('last')]);
@@ -1034,6 +1055,5 @@ window.addEventListener('beforeunload', () => { commitPage(); });
   await openDesign(d || newDesign(1080, 1080));
   if (isMobile()) closePanel();
   renderTemplates();
-  window.PZ.app = {canvas, get D(){ return D; }, addText, addShape, addIcon, addQR, doExport, magicResize, save, stepHistory};
 })();
 })();

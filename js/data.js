@@ -146,6 +146,15 @@ PZ.COMBOS = [
       T('Product Designer',440,250,560,32,'Inter','#5b3df5',{textAlign:'left',fontWeight:'600'}),
       T('alex@example.com\n+40 700 000 000\nexample.com',440,350,560,28,'Inter','#4b5563',{textAlign:'left',lineHeight:1.6})
     ]},
+    {name:'Website hero',w:1440,h:900,bg:'#0e0b1f',objects:[
+      R(0,0,1440,900,G('#1b1446','#0e0b1f','v')),
+      C(1080,450,330,G('#5b3df5','#00c4cc'),{originX:'center',originY:'center',anim:'pop'}),
+      P(PZ.ICONS.sparkle,1230,120,5,'#ffcf3f',{anim:'spin'}),
+      T('Design anything.\nPublish everywhere.',120,240,780,84,'Space Grotesk','#ffffff',{textAlign:'left',fontWeight:'700',anim:'rise'}),
+      T('Turn designs into websites, slides and print files — free, right in your browser.',120,500,640,30,'Inter','#c9c4ef',{textAlign:'left',lineHeight:1.4,anim:'fade'}),
+      R(120,640,300,76,'#ffcf3f',{rx:38,ry:38,anim:'rise',link:'https://github.com/mihaimpmo/inkfold'}),
+      T('Get started →',120,662,300,30,'Inter','#0e0b1f',{fontWeight:'700',anim:'rise',link:'https://github.com/mihaimpmo/inkfold'})
+    ]},
     {name:'Minimal announcement',w:1080,h:1080,bg:'#fafafa',objects:[
       R(80,80,920,920,'rgba(0,0,0,0)',{stroke:'#18191b',strokeWidth:4}),
       T('We are',140,360,800,60,'Raleway','#18191b',{fontWeight:'400'}),
